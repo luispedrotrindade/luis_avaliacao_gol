@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View, ActivityIndicator, FlatList, Text, TouchableOpacity, Platform, Switch } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, FlatList, Text, TouchableOpacity, Platform, Image, Switch } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 
@@ -76,7 +76,7 @@ export default class App extends React.Component {
 
     formatTemperature = (temperature) => {
         let result = temperature;
-        if(!this.state.isCelsius)
+        if (!this.state.isCelsius)
             result = (temperature * 1.8) + 32;
         return result;
     }
@@ -103,16 +103,12 @@ export default class App extends React.Component {
     renderItem = (data) =>
         <TouchableOpacity style={styles.list}>
             <Text style={styles.lightText}>{data.item.applicable_date}</Text>
-            <Text style={styles.lightText}>{this.formatTemperature(data.item.min_temp).toFixed(0)}</Text>
-            <Text style={styles.lightText}>{this.formatTemperature(data.item.max_temp).toFixed(0)}</Text>
-            {/* <SvgUri
-    width="200"
-    height="200"
-    source={{
-    uri: 'https://www.metaweather.com/static/img/weather/sl.svg',
-    }}
-    /> */}
-            {/* data.weather_state_abbr */}
+            <Text style={styles.lightText}>{this.formatTemperature(data.item.min_temp).toFixed(0)}º</Text>
+            <Text style={styles.lightText}>{this.formatTemperature(data.item.max_temp).toFixed(0)}º</Text>
+            <Image
+                style={styles.lightImage}
+                source={{ uri: 'https://www.metaweather.com/static/img/weather/png/64/' + data.item.weather_state_abbr + '.png' }}
+            />
         </TouchableOpacity>
 
     getWeatherByLocation(woeid) {
@@ -161,7 +157,7 @@ export default class App extends React.Component {
             return (
                 [
                     <View key="headerView" style={styles.headerView}>
-                        <Text style={styles.textHeader}>{this.state.title} {this.formatTemperature(this.state.currentPlaceWeather).toFixed()}</Text>
+                        <Text style={styles.textHeader}>{this.state.title} {this.formatTemperature(this.state.currentPlaceWeather).toFixed()}º</Text>
                     </View>,
                     <View key='mapView' style={styles.containerMap}>
                         <MapView
@@ -257,12 +253,16 @@ const styles = StyleSheet.create({
 
     list: {
         backgroundColor: "#fff",
-        width: "100%",
+        width: "90%",
         flexDirection: "row"
     },
 
     lightText: {
         flex: 1,
         justifyContent: "flex-start"
+    },
+    lightImage: {
+        height: 25,
+        width: 25
     }
 });
