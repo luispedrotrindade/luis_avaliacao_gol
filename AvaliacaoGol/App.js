@@ -10,6 +10,7 @@ export default class App extends React.Component {
     }
     state = {
         title: "",
+        currentPlaceWeather: 0,
         currentLongitude: 'unknown',
         currentLatitude: 'unknown',
         locationInfo: {
@@ -73,6 +74,13 @@ export default class App extends React.Component {
         Geolocation.clearWatch(this.watchID);
     }
 
+    formatTemperature = (temperature) => {
+        let result = temperature;
+        if(!this.state.isCelsius)
+            result = (temperature * 1.8) + 32;
+        return result;
+    }
+
     _handleToggleSitch = (value) => {
         this.setState(state =>
             ({
@@ -95,8 +103,8 @@ export default class App extends React.Component {
     renderItem = (data) =>
         <TouchableOpacity style={styles.list}>
             <Text style={styles.lightText}>{data.item.applicable_date}</Text>
-            <Text style={styles.lightText}>{data.item.min_temp}</Text>
-            <Text style={styles.lightText}>{data.item.max_temp}</Text>
+            <Text style={styles.lightText}>{this.formatTemperature(data.item.min_temp).toFixed(0)}</Text>
+            <Text style={styles.lightText}>{this.formatTemperature(data.item.max_temp).toFixed(0)}</Text>
             {/* <SvgUri
     width="200"
     height="200"
@@ -111,10 +119,6 @@ export default class App extends React.Component {
         fetch("https://www.metaweather.com/api/location/" + woeid)
             .then(response => response.json())
             .then((responseJson) => {
-
-
-                // alert(JSON.stringify(consolidated_weather));
-
                 this.setState({
                     locationWeather: {
                         loading: false,
@@ -122,7 +126,8 @@ export default class App extends React.Component {
                     }
                 });
                 this.setState({
-                    title: responseJson.title
+                    title: responseJson.title,
+                    currentPlaceWeather: responseJson.consolidated_weather[0].the_temp
                 });
             })
             .catch(error => console.log(error))
@@ -156,7 +161,7 @@ export default class App extends React.Component {
             return (
                 [
                     <View key="headerView" style={styles.headerView}>
-                        <Text style={styles.textHeader}>{this.state.title}</Text>
+                        <Text style={styles.textHeader}>{this.state.title} {this.formatTemperature(this.state.currentPlaceWeather).toFixed()}</Text>
                     </View>,
                     <View key='mapView' style={styles.containerMap}>
                         <MapView
@@ -205,11 +210,12 @@ const styles = StyleSheet.create({
     },
     textHeader: {
         fontSize: 30,
-        marginTop: 20,
+        marginTop: 25,
         marginBottom: 20,
         justifyContent: 'center',
         textAlignVertical: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        alignSelf: 'center'
     },
     containerMap: {
         position: "relative",
