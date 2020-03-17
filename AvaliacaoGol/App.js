@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     },
     textHeader: {
         fontSize: 30,
-        marginTop: 25,
+        marginTop: 40,
         marginBottom: 20,
         justifyContent: 'center',
         textAlignVertical: 'center',
@@ -225,15 +225,15 @@ const styles = StyleSheet.create({
     },
     containerWheaterList: {
         position: "relative",
-        top: 5,
+        top: 10,
         left: 10,
         right: 0,
         bottom: 0,
-        height: 100,
+        height: 150,
     },
     containerBottom: {
         position: "relative",
-        top: 10,
+        top: 15,
         left: 10,
         right: 0,
         bottom: 0,
