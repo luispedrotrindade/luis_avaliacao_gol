@@ -11,8 +11,12 @@ export default class App extends React.Component {
     state = {
         title: "",
         currentPlaceWeather: 0,
-        currentLongitude: 'unknown',
-        currentLatitude: 'unknown',
+        myLocation: {
+            latitude: 'unknow',
+            longitude: 'unknow',
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421
+        },
         locationInfo: {
             loading: true,
             dataSource: []
@@ -52,22 +56,25 @@ export default class App extends React.Component {
         }
     }
     callLocation(that) {
-        Geolocation.getCurrentPosition(
-            (position) => {
-                const currentLongitude = JSON.stringify(position.coords.longitude);
-                const currentLatitude = JSON.stringify(position.coords.latitude);
-                that.setState({ currentLongitude: currentLongitude });
-                that.setState({ currentLatitude: currentLatitude });
-            },
-            (error) => alert(error.message),
-            { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-        );
         that.watchID = Geolocation.watchPosition((position) => {
             console.log(position);
             const currentLongitude = JSON.stringify(position.coords.longitude);
             const currentLatitude = JSON.stringify(position.coords.latitude);
-            that.setState({ currentLongitude: currentLongitude });
-            that.setState({ currentLatitude: currentLatitude });
+            that.setState({
+                myLocation: {
+                    longitude: position.coords.longitude,
+                    latitude: position.coords.latitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421
+                }
+            });
+
+            fetch("https://www.metaweather.com/api/location/search/?lattlong=" + this.state.myLocation.latitude + "," + this.state.myLocation.longitude)
+                .then(response => response.json())
+                .then((responseJson) => {
+                    this.getWeatherByLocation(responseJson[0].woeid.toString());
+                })
+                .catch(error => console.log(error))
         });
     }
     componentWillUnmount = () => {
@@ -81,7 +88,7 @@ export default class App extends React.Component {
         return result;
     }
 
-    _handleToggleSitch = (value) => {
+    handleToggleSitch = (value) => {
         this.setState(state =>
             ({
                 isCelsius: !state.isCelsius
@@ -91,18 +98,14 @@ export default class App extends React.Component {
 
     FlatListItemSeparator = () => {
         return (
-            <View style={{
-                height: .5,
-                width: "100%",
-                backgroundColor: "rgba(0,0,0,0.5)"
-            }}
+            <View style={styles.flatListItemSeparator}
             />
         );
     }
 
     renderItem = (data) =>
         <TouchableOpacity style={styles.list}>
-            <Text style={styles.lightText}>{data.item.applicable_date}</Text>
+            <Text style={styles.lightText, { width: 130 }}>{data.item.applicable_date}</Text>
             <Text style={styles.lightText}>{this.formatTemperature(data.item.min_temp).toFixed(0)}º</Text>
             <Text style={styles.lightText}>{this.formatTemperature(data.item.max_temp).toFixed(0)}º</Text>
             <Image
@@ -130,30 +133,7 @@ export default class App extends React.Component {
     }
 
     render() {
-
-        try {
-            latitude = parseFloat(this.state.currentLatitude);
-            longitude = parseFloat(this.state.currentLongitude);
-
-        }
-        catch (e) {
-        }
-        if (this.state && !isNaN(latitude) && !isNaN(longitude)) {
-
-            const myLocation = {
-                latitude: latitude,
-                longitude: longitude,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-            }
-
-            fetch("https://www.metaweather.com/api/location/search/?lattlong=" + myLocation.latitude + "," + myLocation.longitude)
-                .then(response => response.json())
-                .then((responseJson) => {
-                    this.getWeatherByLocation(responseJson[0].woeid.toString());
-                })
-                .catch(error => console.log(error))
-
+        if (this.state && this.state.myLocation && !isNaN(this.state.myLocation.latitude) && !isNaN(this.state.myLocation.longitude)) {
             return (
                 [
                     <View key="headerView" style={styles.headerView}>
@@ -163,9 +143,9 @@ export default class App extends React.Component {
                         <MapView
                             showsUserLocation={true}
                             style={styles.map}
-                            initialRegion={myLocation}
+                            initialRegion={this.state.myLocation}
                         >
-                            <Marker coordinate={myLocation} />
+                            <Marker coordinate={this.state.myLocation} />
                         </MapView>
                     </View>,
                     <View key='weatherListView' style={styles.containerWheaterList}>
@@ -179,7 +159,7 @@ export default class App extends React.Component {
                     <View key='bottomView' style={styles.containerBottom}>
                         <Text style={{ flex: 1, fontSize: 23, width: 200, alignSelf: 'baseline' }}>{this.state.isCelsius ? 'Celsius' : 'Fahrenheit'}</Text>
                         <Switch
-                            onValueChange={this._handleToggleSitch}
+                            onValueChange={this.handleToggleSitch}
                             value={this.state.isCelsius}
                             style={{ flex: 1 }}
                         />
@@ -219,9 +199,16 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        height: 400,
+        height: '50%',
         justifyContent: 'flex-end',
         alignItems: 'center',
+    },
+    map: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
     },
     containerWheaterList: {
         position: "relative",
@@ -230,36 +217,35 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         height: 150,
+        height: '25%'
     },
     containerBottom: {
         position: "relative",
-        top: 15,
+        top: 30,
         left: 10,
         right: 0,
         bottom: 0,
-        height: 100,
         justifyContent: 'space-around',
         alignItems: 'center',
         flexDirection: "row"
     },
-
-    map: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+    flatListItemSeparator: {
+        height: .5,
+        width: "100%",
+        backgroundColor: "rgba(0,0,0,0.5)"
     },
-
     list: {
         backgroundColor: "#fff",
         width: "90%",
-        flexDirection: "row"
+        justifyContent: "center",
+        flexDirection: "row",
+        paddingTop: 10
     },
 
     lightText: {
         flex: 1,
-        justifyContent: "flex-start"
+        height: 30,
+        alignSelf: 'center'
     },
     lightImage: {
         height: 25,
